@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://js.stripe.com/v3/"></script>
 <style>
 /* ─── RESET & BASE ─────────────────────────────────────────────────────────── */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1491,7 +1492,7 @@ select.form-input{cursor:pointer}
   <div class="landing-grid"></div>
 
   <nav class="nav">
-    <div class="nav-logo">BLEND</div>
+    <div class="nav-logo" onclick="goTo('landing')" style="cursor:pointer">BLEND</div>
     <ul class="nav-links">
       <li><a href="#" onclick="scrollFeatures(event)">How It Works</a></li>
       <li><a href="#" onclick="scrollFeatures(event)">Bases</a></li>
@@ -1724,7 +1725,7 @@ select.form-input{cursor:pointer}
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="quiz" class="screen">
   <div class="quiz-nav">
-    <div class="quiz-logo">BLEND</div>
+    <div class="quiz-logo" onclick="goTo('landing')" style="cursor:pointer">BLEND</div>
     <div class="quiz-progress-wrap">
       <div class="quiz-progress-track">
         <div class="quiz-progress-fill" id="qProgressFill"></div>
@@ -1747,7 +1748,7 @@ select.form-input{cursor:pointer}
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="reveal" class="screen">
   <div class="reveal-header">
-    <div class="reveal-logo">BLEND</div>
+    <div class="reveal-logo" onclick="goTo('landing')" style="cursor:pointer">BLEND</div>
     <div class="reveal-tag">Your Custom Formula</div>
   </div>
   <div class="reveal-body">
@@ -1800,7 +1801,7 @@ select.form-input{cursor:pointer}
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="configurator" class="screen">
   <div class="cfg-header">
-    <div class="cfg-logo">BLEND</div>
+    <div class="cfg-logo" onclick="goTo('landing')" style="cursor:pointer">BLEND</div>
     <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;color:rgba(244,240,230,0.3)">CUSTOMIZE YOUR FORMULA</div>
     <button class="btn-cfg-back" onclick="goTo('reveal')">Back to Reveal</button>
   </div>
@@ -1859,7 +1860,7 @@ select.form-input{cursor:pointer}
 <!-- ═══════════════════════════════════════════════════════════════════════ -->
 <div id="checkout" class="screen">
   <div class="co-header">
-    <div class="co-logo">BLEND</div>
+    <div class="co-logo" onclick="goTo('landing')" style="cursor:pointer">BLEND</div>
     <div class="co-secure">
       <div class="lock-icon">
         <svg width="8" height="8" viewBox="0 0 8 8" fill="none"><rect x="1" y="4" width="6" height="4" rx="1" fill="rgba(244,240,230,0.3)"/><path d="M2.5 4V3a1.5 1.5 0 013 0v1" stroke="rgba(244,240,230,0.3)" stroke-width="1"/></svg>
@@ -1931,14 +1932,15 @@ select.form-input{cursor:pointer}
       <div class="co-section">
         <div class="co-section-title">Payment</div>
         <div class="form-row full">
-          <div class="form-group"><label class="form-label">Card Number</label><input class="form-input" type="text" placeholder="4242 4242 4242 4242" maxlength="19"></div>
+          <div class="form-group"><label class="form-label">Name on Card</label><input class="form-input" id="cardName" type="text" placeholder="Jose Garcia"></div>
         </div>
-        <div class="form-row">
-          <div class="form-group"><label class="form-label">Expiry</label><input class="form-input" type="text" placeholder="MM / YY" maxlength="7"></div>
-          <div class="form-group"><label class="form-label">CVV</label><input class="form-input" type="text" placeholder="123" maxlength="4"></div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="form-label">Card Details</label>
+          <div id="stripe-card-element" style="padding:13px 16px;border:1.5px solid rgba(0,0,0,0.1);background:white;transition:border-color .15s;"></div>
+          <div id="stripe-card-errors" style="color:#b03a2e;font-size:12px;margin-top:6px;font-family:'DM Mono',monospace;display:none;"></div>
         </div>
-        <div class="form-row full">
-          <div class="form-group"><label class="form-label">Name on Card</label><input class="form-input" type="text" placeholder="Jose Garcia"></div>
+        <div id="payment-notice" style="font-size:11px;color:rgba(0,0,0,0.3);font-family:'DM Mono',monospace;letter-spacing:.5px;margin-top:8px;">
+          Secured by Stripe. Your card details never touch our servers.
         </div>
       </div>
 
@@ -1956,7 +1958,8 @@ select.form-input{cursor:pointer}
         <span>Total</span>
         <span class="co-total-price" id="coTotal">$44.99</span>
       </div>
-      <button class="btn-place" onclick="placeOrder()">Place Order</button>
+      <button class="btn-place" id="btnPlace" onclick="placeOrder()">Place Order</button>
+      <div id="payment-error-msg" style="color:#b03a2e;font-size:12px;font-family:'DM Mono',monospace;text-align:center;margin-top:10px;display:none;"></div>
       <div class="co-guarantee">30-day satisfaction guarantee &bull; Free returns &bull; No hidden fees</div>
     </div>
   </div>
@@ -2098,7 +2101,7 @@ function goTo(id){
   window.scrollTo(0,0);
   if(id==='reveal') buildReveal();
   if(id==='configurator') buildConfigurator();
-  if(id==='checkout') buildCheckout();
+  if(id==='checkout'){ buildCheckout(); setTimeout(initStripe, 100); }
 }
 
 function scrollFeatures(e){
@@ -2442,17 +2445,135 @@ function updateOrderSummary(){
   document.getElementById('coTotal').textContent='$'+total.toFixed(2);
 }
 
-function placeOrder(){
-  const p=calcPrice();
-  let fp=p;
-  if(selectedPlan==='quarterly') fp=p*3*0.9;
-  if(selectedPlan==='onetime') fp=p*1.18;
-  const name=BLEND_NAMES[rec.base]||'APEX';
-  const flName=FLAVORS.find(f=>f.id===(rec.flavor||'chocolate'))?.name||'Choc';
-  document.getElementById('ssBlend').textContent=name.split(' ')[0];
-  document.getElementById('ssFlavor').textContent=flName.substring(0,5).toUpperCase();
-  document.getElementById('ssProtein').textContent=rec.dose+'G';
-  document.getElementById('ssPrice').textContent='$'+fp.toFixed(2);
+/* ─── STRIPE SETUP ──────────────────────────────────────────────────────── */
+// PASTE YOUR STRIPE PUBLISHABLE KEY HERE after you get it from Stripe dashboard
+// It looks like: pk_live_... (production) or pk_test_... (testing)
+const STRIPE_PUBLISHABLE_KEY = pk_test_51TQEmLGVodB3uVsA2l7DzXklERZQuTPXnvNh0J4Sf5dvtzKHxfxnpFN9txALw4sDIsiMljq79rmrpNPNbLuWgeBG00rM7Mwd5W;
+
+// PASTE YOUR BACKEND URL HERE after you deploy to Railway
+// It looks like: https://blend-backend.up.railway.app
+const BACKEND_URL = 'https://REPLACE_WITH_YOUR_RAILWAY_URL';
+
+let stripeInstance = null;
+let stripeCardElement = null;
+
+function initStripe() {
+  if (!STRIPE_PUBLISHABLE_KEY.includes('REPLACE')) {
+    stripeInstance = Stripe(STRIPE_PUBLISHABLE_KEY);
+    const elements = stripeInstance.elements({
+      fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=DM+Sans:wght@400&display=swap' }],
+    });
+    stripeCardElement = elements.create('card', {
+      style: {
+        base: {
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: '14px',
+          color: '#1a1a18',
+          '::placeholder': { color: 'rgba(0,0,0,0.3)' },
+        },
+        invalid: { color: '#b03a2e' },
+      },
+      hidePostalCode: false,
+    });
+    stripeCardElement.mount('#stripe-card-element');
+    stripeCardElement.on('change', e => {
+      const errEl = document.getElementById('stripe-card-errors');
+      if (e.error) { errEl.textContent = e.error.message; errEl.style.display = 'block'; }
+      else { errEl.style.display = 'none'; }
+    });
+    document.getElementById('stripe-card-element').style.borderColor = 'rgba(0,0,0,0.1)';
+  }
+}
+
+async function placeOrder() {
+  const btn = document.getElementById('btnPlace');
+  const errMsg = document.getElementById('payment-error-msg');
+  errMsg.style.display = 'none';
+
+  // Validate required fields
+  const firstName = document.querySelector('.form-input[placeholder="Jose"]')?.value?.trim();
+  const lastName  = document.querySelector('.form-input[placeholder="Garcia"]')?.value?.trim();
+  const email     = document.querySelector('.form-input[type="email"]')?.value?.trim();
+  const address   = document.querySelector('.form-input[placeholder="Av. Insurgentes Sur 1234"]')?.value?.trim();
+  const city      = document.querySelector('.form-input[placeholder="Mexico City"]')?.value?.trim();
+  const postal    = document.querySelector('.form-input[placeholder="06600"]')?.value?.trim();
+  const cardName  = document.getElementById('cardName')?.value?.trim();
+
+  if (!firstName || !lastName || !email || !address || !city || !postal) {
+    errMsg.textContent = 'Please fill in all shipping fields.';
+    errMsg.style.display = 'block';
+    return;
+  }
+
+  // If Stripe is not yet configured, simulate success for testing
+  if (STRIPE_PUBLISHABLE_KEY.includes('REPLACE') || BACKEND_URL.includes('REPLACE')) {
+    showSuccess();
+    return;
+  }
+
+  btn.textContent = 'Processing...';
+  btn.disabled = true;
+  btn.style.opacity = '.6';
+
+  try {
+    const p = calcPrice();
+    let fp = p;
+    if (selectedPlan === 'quarterly') fp = p * 3 * 0.9;
+    if (selectedPlan === 'onetime')   fp = p * 1.18;
+
+    const billingMap = { monthly: 'MONTHLY', quarterly: 'QUARTERLY', onetime: 'ONETIME' };
+
+    // 1. Create customer + blend spec + payment intent in backend
+    const intentRes = await fetch(`${BACKEND_URL}/api/v1/checkout/create-intent`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer: { firstName, lastName, email, addressLine1: address, city, postalCode: postal, country: 'MX' },
+        blend: {
+          baseSlug:     rec.base,
+          flavorSlug:   rec.flavor || 'chocolate',
+          proteinGrams: rec.dose,
+          addInSlugs:   rec.addins || [],
+          quizAnswers:  answers,
+        },
+        billingInterval: billingMap[selectedPlan] || 'MONTHLY',
+      }),
+    });
+
+    if (!intentRes.ok) throw new Error('Could not create payment. Please try again.');
+    const { clientSecret } = await intentRes.json();
+
+    // 2. Confirm card payment with Stripe
+    const { error, paymentIntent } = await stripeInstance.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: stripeCardElement,
+        billing_details: { name: cardName || `${firstName} ${lastName}`, email },
+      },
+    });
+
+    if (error) throw new Error(error.message);
+    if (paymentIntent.status === 'succeeded') showSuccess();
+
+  } catch (e) {
+    errMsg.textContent = e.message || 'Payment failed. Please try again.';
+    errMsg.style.display = 'block';
+    btn.textContent = 'Place Order';
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function showSuccess() {
+  const p = calcPrice();
+  let fp = p;
+  if (selectedPlan === 'quarterly') fp = p * 3 * 0.9;
+  if (selectedPlan === 'onetime')   fp = p * 1.18;
+  const name   = BLEND_NAMES[rec.base] || 'APEX';
+  const flName = FLAVORS.find(f => f.id === (rec.flavor || 'chocolate'))?.name || 'Choc';
+  document.getElementById('ssBlend').textContent   = name.split(' ')[0];
+  document.getElementById('ssFlavor').textContent  = flName.substring(0, 5).toUpperCase();
+  document.getElementById('ssProtein').textContent = rec.dose + 'G';
+  document.getElementById('ssPrice').textContent   = '$' + fp.toFixed(2);
   goTo('success');
 }
 
@@ -2465,19 +2586,6 @@ function restart(){
 
 /* ─── INIT ──────────────────────────────────────────────────────────────── */
 renderQ();
-
-/* Card number formatting */
-document.addEventListener('input',e=>{
-  if(e.target.placeholder==='4242 4242 4242 4242'){
-    let v=e.target.value.replace(/\D/g,'').substring(0,16);
-    e.target.value=v.replace(/(.{4})/g,'$1 ').trim();
-  }
-  if(e.target.placeholder==='MM / YY'){
-    let v=e.target.value.replace(/\D/g,'').substring(0,4);
-    if(v.length>2) v=v.substring(0,2)+' / '+v.substring(2);
-    e.target.value=v;
-  }
-});
 </script>
 </body>
 </html>
